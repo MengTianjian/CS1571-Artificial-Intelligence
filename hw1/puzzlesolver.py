@@ -19,29 +19,46 @@ def readfile(filename):
         problem["sensors"] = {}
         sensors = f.readline().split(",")
         for i in range(0, len(sensors), 4):
-            problem["sensors"][i/4+1] = {}
-            problem["sensors"][i/4+1][0] = sensors[i].lstrip(" (\"").rstrip("\"")
-            problem["sensors"][i/4+1][1] = sensors[i+1]
-            problem["sensors"][i/4+1][2] = sensors[i+2]
-            problem["sensors"][i/4+1][3] = sensors[i+3].rstrip(")")
             if i == 0:
-                problem["sensors"][i/4+1][0] = sensors[i].lstrip("[(\"").rstrip("\"")
-            if i == len(sensors)-4:
-                problem["sensors"][i/4+1][3] = sensors[i+3].rstrip(")]\n")
+                sensor = sensors[i].lstrip("[(\"").rstrip("\"")
+                problem["sensors"][sensor] = {}
+                problem["sensors"][sensor][0] = int(sensors[i+1])
+                problem["sensors"][sensor][1] = int(sensors[i+2])
+                problem["sensors"][sensor][2] = int(sensors[i+3].rstrip(")"))
+            elif i == len(sensors)-4:
+                sensor = sensors[i].lstrip("(\"").rstrip("\"")
+                problem["sensors"][sensor] = {}
+                problem["sensors"][sensor][0] = int(sensors[i+1])
+                problem["sensors"][sensor][1] = int(sensors[i+2])
+                problem["sensors"][sensor][2] = int(sensors[i+3].rstrip(")]\n"))
+            else:
+                sensor = sensors[i].lstrip("(\"").rstrip("\"")
+                problem["sensors"][sensor] = {}
+                problem["sensors"][sensor][0] = int(sensors[i+1])
+                problem["sensors"][sensor][1] = int(sensors[i+2])
+                problem["sensors"][sensor][2] = int(sensors[i+3].rstrip(")"))
         targets = f.readline().split(",")
         for i in range(0, len(targets), 3):
-            problem["targets"][i/3+1] = {}
-            problem["targets"][i/3+1][0] = targets[i].lstrip(" (\"").rstrip("\"")
-            problem["targets"][i/3+1][1] = targets[i+1]
-            problem["targets"][i/3+1][2] = targets[i+2].rstrip(")")
             if i == 0:
-                problem["targets"][i/3+1][0] = targets[i].lstrip("[(\"").rstrip("\"")
-            if i == len(targets)-3:
-                problem["targets"][i/3+1][2] = targets[i+2].rstrip(")]\n")
-        problem["weight"] = [[0 for x in range(1+len(problem["sensors"]))] for y in range(1+len(problem["targets"]))]
-        for i in range(1, 1+len(problem["targets"])):
-            for j in range(1, 1+len(problem["sensors"])):
-                problem["weight"][i][j] = float(problem["sensors"][j][3])/math.sqrt((int(problem["sensors"][j][1])-int(problem["targets"][i][1]))**2+(int(problem["sensors"][j][2])-int(problem["targets"][i][2]))**2)
+                target = targets[i].lstrip("[(\"").rstrip("\"")
+                problem["targets"][target] = {}
+                problem["targets"][target][0] = int(targets[i+1])
+                problem["targets"][target][1] = int(targets[i+2].rstrip(")"))
+            elif i == len(targets)-3:
+                target = targets[i].lstrip("(\"").rstrip("\"")
+                problem["targets"][target] = {}
+                problem["targets"][target][0] = int(targets[i+1])
+                problem["targets"][target][1] = int(targets[i+2].rstrip(")]\n"))
+            else:
+                target = targets[i].lstrip("(\"").rstrip("\"")
+                problem["targets"][target] = {}
+                problem["targets"][target][0] = int(targets[i+1])
+                problem["targets"][target][1] = int(targets[i+2].rstrip(")"))
+        problem["weight"] = {}#[[0 for x in range(1+len(problem["sensors"]))] for y in range(1+len(problem["targets"]))]
+        for target in problem["targets"]:
+            problem["weight"][target] = {}
+            for sensor in problem["sensors"]:
+                problem["weight"][target][sensor] = float(problem["sensors"][sensor][2])/math.sqrt((problem["sensors"][sensor][0]-problem["targets"][target][0])**2+(problem["sensors"][sensor][1]-problem["targets"][target][1])**2)
     if problem["type"] == "aggregation":
         problem["nodes"] = {}
         problem["connections"] = {}
@@ -50,18 +67,18 @@ def readfile(filename):
             if i == 0:
                 node = nodes[i].lstrip("[(\"").rstrip("\"")
                 problem["nodes"][node] = {}
-                problem["nodes"][node][0] = nodes[i+1]
-                problem["nodes"][node][1] = nodes[i+2].rstrip(")")
+                problem["nodes"][node][0] = int(nodes[i+1])
+                problem["nodes"][node][1] = int(nodes[i+2].rstrip(")"))
             elif i == len(nodes)-3:
-                node = nodes[i].lstrip(" (\"").rstrip("\"")
+                node = nodes[i].lstrip("(\"").rstrip("\"")
                 problem["nodes"][node] = {}
-                problem["nodes"][node][0] = nodes[i+1]
-                problem["nodes"][node][1] = nodes[i+2].rstrip(")]\n")
+                problem["nodes"][node][0] = int(nodes[i+1])
+                problem["nodes"][node][1] = int(nodes[i+2].rstrip(")]\n"))
             else:
-                node = nodes[i].lstrip(" (\"").rstrip("\"")
+                node = nodes[i].lstrip("(\"").rstrip("\"")
                 problem["nodes"][node] = {}
-                problem["nodes"][node][0] = nodes[i+1]
-                problem["nodes"][node][1] = nodes[i+2].rstrip(")")
+                problem["nodes"][node][0] = int(nodes[i+1])
+                problem["nodes"][node][1] = int(nodes[i+2].rstrip(")"))
         k = 0
         for line in f:
             if line == " \n":
@@ -76,6 +93,16 @@ def readfile(filename):
         #for i in range(1, 1+len(problem["nodes"])):
         #    for j in range(1, 1+len(problem["nodes"])):
         #        problem["weight"][i][j] =
+    if problem["type"] == "pancakes":
+        problem["pancakes"] = {}
+        pancakes = f.readline().split(",")
+        for i in range(len(pancakes)):
+            if i == 0:
+                problem["pancakes"][i+1] = int(pancakes[i].lstrip("("))
+            elif i == len(pancakes)-1:
+                problem["pancakes"][i+1] = int(pancakes[i].rstrip(")\n"))
+            else:
+                problem["pancakes"][i+1] = int(pancakes[i])
     #print problem
     return problem
 
@@ -84,11 +111,12 @@ def init(problem):
         node = {}
         node["state"] = ""
         node["cost"] = 0
-        node["distance"] = 0
+        #node["distance"] = 0
+        node["unassign"] = len(problem["targets"])
         node["targets"] = {}
-        node["targets"] = [[0 for x in range(2)] for y in range(1+len(problem["targets"]))]
+        #node["targets"] = [[0 for x in range(2)] for y in range(1+len(problem["targets"]))]
         node["sensors"] = {}
-        node["sensors"] = [[0 for x in range(2)] for y in range(1+len(problem["sensors"]))]
+        #node["sensors"] = [[0 for x in range(2)] for y in range(1+len(problem["sensors"]))]
         node["path"] = ""
         #print node
         return node
@@ -99,14 +127,24 @@ def init(problem):
         node["distance"] = 0
         node["path"] = ""
         return node
+    if problem["type"] == "pancakes":
+        node = {}
+        node["pancakes"] = {}
+        node["state"] = ""
+        for i in range(len(problem["pancakes"])):
+            node["pancakes"][i+1] = problem["pancakes"][i+1]
+            node["state"] = node["state"] + str(node["pancakes"][i+1]) + " "
+        node["path"] = node["state"]
+        node["cost"] = 0
+        return node
 
 def goal_test(problem, node):
     if problem["type"] == "monitor":
-        for t in range(1, len(node["targets"])):
-            if node["targets"][t][0] == 0:
+        for target in problem["targets"]:
+            if target not in node["targets"]:
                 return False
-        for s in range(1, len(node["sensors"])):
-            if node["sensors"][s][0] == 0:
+        for sensor in problem["sensors"]:
+            if sensor not in node["sensors"]:
                 return False
         return True
     if problem["type"] == "aggregation":
@@ -114,25 +152,35 @@ def goal_test(problem, node):
             if key not in node["path"]:
                 return False
         return True
+    if problem["type"] == "pancakes":
+        for i in range(len(problem["pancakes"])):
+            if node["pancakes"][i+1] != i+1:
+                return False
+        return True
 
 def get_successor_states(problem, node):
+    global time
     if problem["type"] == "monitor":
         successors = Queue.Queue()#set()
-        for s in range(1, len(node["sensors"])):
-            if node["sensors"][s][0] == 0:
-                for t in range(1, len(node["targets"])):
-                    new_node = copy.deepcopy(node)
-                    new_node["sensors"][s][0] = -1*problem["weight"][t][s]
-                    new_node["sensors"][s][1] = t
-                    if new_node["targets"][t][0] > -1*problem["weight"][t][s]:#< problem["weight"][t][s]:
-                        new_node["targets"][t][0] = -1*problem["weight"][t][s]
-                        new_node["targets"][t][1] = s
-                    new_node["state"] = "S_"+str(s)+"_T_"+str(t)
-                    new_node["path"] = new_node["path"]+"S_"+str(s)+"_T_"+str(t)+"\n"
-                    new_node["cost"]=-1*problem["weight"][t][s]
-                    distance = math.sqrt((int(problem["sensors"][s][1])-int(problem["targets"][t][1]))**2+(int(problem["sensors"][s][2])-int(problem["targets"][t][2]))**2)
-                    new_node["distance"] = distance
-                    successors.put(new_node)
+        for sensor in problem["sensors"]:
+            if sensor not in node["sensors"]:
+                for target in problem["targets"]:
+                    if sensor+"_"+target not in node["path"]:
+                        new_node = copy.deepcopy(node)
+                        new_node["sensors"][sensor] = -1*problem["weight"][target][sensor]
+                        if target in new_node["targets"]:
+                            if new_node["targets"][target] > -1*problem["weight"][target][sensor]:#< problem["weight"][t][s]:
+                                new_node["targets"][target] = -1*problem["weight"][target][sensor]
+                        else:
+                            new_node["targets"][target] = -1*problem["weight"][target][sensor]
+                        new_node["state"] = sensor+"_"+target
+                        new_node["path"] = new_node["path"]+sensor+"_"+target+"\n"
+                        new_node["cost"]=-1*problem["weight"][target][sensor]
+                        #distance = math.sqrt((problem["sensors"][sensor][0]-problem["targets"][target][0])**2+(problem["sensors"][sensor][1]-problem["targets"][target][1])**2)
+                        #new_node["distance"] = distance
+                        new_node["unassign"] = len(problem["targets"]) - len(new_node["targets"])
+                        time = time + 1
+                        successors.put(new_node)
                 return successors
     if problem["type"] == "aggregation":
         successors = Queue.Queue()
@@ -143,177 +191,232 @@ def get_successor_states(problem, node):
                 new_node["path"] = key
                 new_node["delay"] = float('inf')
                 new_node["distance"] = float('inf')
+                time = time + 1
                 successors.put(new_node)
         else:
             for i in range(len(problem["connections"])):
-                if node["state"] == problem["connections"][i][0]:
+                if node["state"] == problem["connections"][i][0] and problem["connections"][i][1] not in node["path"]:
                     new_node = copy.deepcopy(node)
                     new_node["state"] = problem["connections"][i][1]
                     if new_node["delay"] == float('inf'):
                         new_node["delay"] = problem["connections"][i][2]
                     else:
                         new_node["delay"] = new_node["delay"]+problem["connections"][i][2]
-                    distance = math.sqrt((int(problem["nodes"][new_node["state"]][0])-int(problem["nodes"][node["state"]][0]))**2+(int(problem["nodes"][new_node["state"]][1])-int(problem["nodes"][node["state"]][1]))**2)
+                    distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
                     #if new_node["distance"] == float('inf'):
                     new_node["distance"] = distance
                     #else:
                     #    new_node["distance"] = new_node["distance"]+distance
                     new_node["path"] = new_node["path"] + "\n" + problem["connections"][i][1]
+                    time = time + 1
                     successors.put(new_node)
-                elif node["state"] == problem["connections"][i][1]:
+                elif node["state"] == problem["connections"][i][1] and problem["connections"][i][0] not in node["path"]:
                     new_node = copy.deepcopy(node)
                     new_node["state"] = problem["connections"][i][0]
                     if new_node["delay"] == float('inf'):
                         new_node["delay"] = problem["connections"][i][2]
                     else:
                         new_node["delay"] = new_node["delay"]+problem["connections"][i][2]
-                    distance = math.sqrt((int(problem["nodes"][new_node["state"]][0])-int(problem["nodes"][node["state"]][0]))**2+(int(problem["nodes"][new_node["state"]][1])-int(problem["nodes"][node["state"]][1]))**2)
+                    distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
                     #if new_node["distance"] == float('inf'):
                     new_node["distance"] = distance
                     #else:
                     #    new_node["distance"] = new_node["distance"]+distance
                     new_node["path"] = new_node["path"] + "\n" + problem["connections"][i][0]
+                    time = time + 1
                     successors.put(new_node)
+        return successors
+    if problem["type"] == "pancakes":
+        successors = Queue.Queue()
+        for i in range(1, 1+len(problem["pancakes"])):
+            new_node = copy.deepcopy(node)
+            for j in range(1, i+1):
+                new_node["pancakes"][j] = -1*node["pancakes"][i+1-j]
+            new_node["cost"] = new_node["cost"] + 1
+            new_node["state"] = ""
+            for i in range(len(new_node["pancakes"])):
+                new_node["state"] = new_node["state"] + str(new_node["pancakes"][i+1]) + " "
+            if new_node["state"] not in node["path"]:
+                new_node["path"] = new_node["path"] + "\n" + new_node["state"]
+                time = time + 1
+                successors.put(new_node)
         return successors
 
 def path_cost(problem, node):
     if problem["type"] == "monitor":
         cost = set()
-        for t in range(1, len(node["targets"])-1):
-            if node["targets"][t][0] != 0:
-                cost.add(node["targets"][t][0])
+        for target in problem["targets"]:
+            if target in node["targets"]:
+                cost.add(node["targets"][target])
         if cost == set():
             return 0
         return max(cost)#min(cost)
     if problem["type"] == "aggregation":
         return node["delay"]
+    if problem["type"] == "pancakes":
+        return node["cost"]
 
 def heuristic(problem, node):
     if problem["type"] == "monitor":
-        return node["distance"]
+        #return node["distance"]
+        return node["unassign"]
     if problem["type"] == "aggregation":
         return node["distance"]
+    if problem["type"] == "pancakes":
+        h = 0
+        for i in range(1, 1+len(node["pancakes"])):
+            if node["pancakes"][i] < 0:
+                h = h + 1 + abs(i+node["pancakes"][i])
+            else:
+                h = h + abs(i-node["pancakes"][i])
+        return h
+
+def output(problem, node):
+    global maxfrontier
+    global maxexplored
+    global time
+    print node["path"].rstrip("\n")
+    print "Time: "+str(time)
+    print "Space: Frontier "+str(maxfrontier)+" ,Visited "+str(maxexplored)
+    if problem["type"] == "monitor":
+        print "Cost "+str(-1*path_cost(problem, node))
+    else:
+        print "Cost "+str(path_cost(problem, node))
 
 def bfs(problem, start):
     frontier = Queue.Queue()
-    maxfrontier = 0
-    maxexplored = 0
     frontier.put(start)
     explored = set()
+    global maxfrontier
+    global maxexplored
+    global time
     while not frontier.empty():
         if frontier.qsize() > maxfrontier:
             maxfrontier = frontier.qsize()
         if len(explored) > maxexplored:
             maxexplored = len(explored)
         node = frontier.get()
-        print node
+        #print node["path"]+"\n"
+        #print "\n"
         if goal_test(problem, node):
-            print node["path"]
-            print maxfrontier
-            print maxexplored
-            return path_cost(problem, node)
-        if node["state"] not in explored:
-            explored.add(node["state"])
+            output(problem, node)
+            return True
+        if node["path"] not in explored:#node["state"] not in explored:
+            explored.add(node["path"])#node["state"])
             successors = get_successor_states(problem, node)
             if successors != None:
                 while not successors.empty():
                     child = successors.get()
-                    if child["state"] not in explored:
+                    if child["path"] not in explored:#child["state"] not in explored:
                         frontier.put(child)
         #for child in get_successor_states(problem, node):
             #if child not in frontier:#child not in explored and child not in frontier:
                 #frontier.put(child)
-
+    print "No solution"
     return False
 
 def unicost(problem, start):
     frontier = []
     frontierset = set()
-    maxfrontier = 0
-    maxexplored = 0
     heapq.heappush(frontier, (path_cost(problem, start), start))
-    frontierset.add(start["state"])
+    frontierset.add(start["path"])#start["state"])
     explored = set()
+    global maxfrontier
+    global maxexplored
+    global time
     while frontier:
         if len(frontier) > maxfrontier:
             maxfrontier = len(frontier)
         if len(explored) > maxexplored:
             maxexplored = len(explored)
         node = heapq.heappop(frontier)[1]
-        print node
-        frontierset.remove(node["state"])
+        #print node["path"]+"\n"
+        frontierset.remove(node["path"])#["state"])
         if goal_test(problem, node):
-            print node["path"]
-            print maxfrontier
-            print maxexplored
-            return path_cost(problem, node)
-        if node["state"] not in explored:
-            explored.add(node["state"])
+            output(problem, node)
+            return True
+        if node["path"] not in explored:#["state"] not in explored:
+            explored.add(node["path"])#["state"])
         #    for child in get_successor_states(node):
         #        if child not in explored and child not in frontier:
             successors = get_successor_states(problem, node)
             if successors != None:
                 while not successors.empty():
                     child = successors.get()
-                    if child["state"] not in explored and child["state"] not in frontierset:
+                    if child["path"] not in explored and child["path"] not in frontierset:#child["state"] not in explored and child["state"] not in frontierset:
                         heapq.heappush(frontier, (path_cost(problem, child), child))
-                        frontierset.add(child["state"])
-                    elif child["state"] in frontierset:
+                        frontierset.add(child["path"])#["state"])
+                    elif child["path"] in frontierset:#child["state"] in frontierset:
                         for i in range(len(frontier)):
-                            if frontier[i][1]["state"] == child["state"] and path_cost(problem, child) < frontier[i][0]:
+                            if frontier[i][1]["path"] == child["path"] and path_cost(problem, child) < frontier[i][0]:#frontier[i][1]["state"] == child["state"] and path_cost(problem, child) < frontier[i][0]:
                                 frontier.remove(frontier[i])
                                 heapq.heapify(frontier)
                                 heapq.heappush(frontier, (path_cost(problem, child), child))
-                                #frontierset.add(child["state"])
+    print "No solution"
+    return False
 
 def greedy(problem, start):
     frontier = []
     frontierset = set()
     heapq.heappush(frontier, (heuristic(problem, start), start))
-    frontierset.add(start["state"])
+    frontierset.add(start["path"])#["state"])
     explored = set()
+    global maxfrontier
+    global maxexplored
+    global time
     while frontier:
+        if len(frontier) > maxfrontier:
+            maxfrontier = len(frontier)
+        if len(explored) > maxexplored:
+            maxexplored = len(explored)
         node = heapq.heappop(frontier)[1]
-        print node
-        frontierset.remove(node["state"])
+        #print node
+        frontierset.remove(node["path"])#["state"])
         if goal_test(problem, node):
-            print node["path"]
-            return path_cost(problem, node)
-        if node["state"] not in explored:
-            explored.add(node["state"])
+            output(problem, node)
+            return True
+        if node["path"] not in explored:#["state"] not in explored:
+            explored.add(node["path"])#["state"])
             successors = get_successor_states(problem, node)
             if successors != None:
                 while not successors.empty():
                     child = successors.get()
-                    if child["state"] not in explored and child["state"] not in frontierset:
+                    if child["path"] not in explored and child["path"] not in frontierset:#["state"] not in explored and child["state"] not in frontierset:
                         heapq.heappush(frontier, (heuristic(problem, child), child))
-                        frontierset.add(child["state"])
-                    elif child["state"] in frontierset:
+                        frontierset.add(child["path"])#["state"])
+                    elif child["path"] in frontierset:#["state"] in frontierset:
                         for i in range(len(frontier)):
-                            if frontier[i][1]["state"] == child["state"] and heuristic(problem, child) < frontier[i][0]:
+                            if frontier[i][1]["path"] == child["path"] and heuristic(problem, child) < frontier[i][0]:#["state"] == child["state"] and heuristic(problem, child) < frontier[i][0]:
                                 frontier.remove(frontier[i])
                                 heapq.heapify(frontier)
                                 heapq.heappush(frontier, (heuristic(problem, child), child))
-
+    print "No solution"
+    return False
 
 def recursivedls(problem, start, depth):
+    global maxfrontier
+    global maxexplored
+    global time
+    explored = set()
     if goal_test(problem, start):
-        print start["path"]
-        return path_cost(problem, start)
+        output(problem, start)
+        return True
     elif depth == 0:
         return 0
     else:
         cutoff = False
         successors = get_successor_states(problem, start)
-        #print successors
-        while not successors.empty():
-            child = successors.get()
-        #for child in get_successor_states(start):
-            result = recursivedls(problem, child, depth-1)
-            if result == 0:
-                cutoff = True
-            elif result != False:
-                return result
+        if successors != None:
+            while not successors.empty():
+                child = successors.get()
+                if child["path"] not in explored:
+                    explored.add(child["path"])
+            #for child in get_successor_states(start):
+                result = recursivedls(problem, child, depth-1)
+                if result == 0:
+                    cutoff = True
+                elif result != False:
+                    return result
         if cutoff == True:
             return 0
         else:
@@ -324,39 +427,49 @@ def iddfs(problem, start):
         result = recursivedls(problem, start, depth)
         if result != 0:
             return result
+    print "No solution"
+    return False
 
 def Astar(problem, start):
     frontier = []
     frontierset = set()
     heapq.heappush(frontier, (path_cost(problem, start)+heuristic(problem, start), start))
-    frontierset.add(start["state"])
+    frontierset.add(start["path"])
     explored = set()
+    global maxfrontier
+    global maxexplored
+    global time
     while frontier:
+        if len(frontier) > maxfrontier:
+            maxfrontier = len(frontier)
+        if len(explored) > maxexplored:
+            maxexplored = len(explored)
         node = heapq.heappop(frontier)[1]
-        frontierset.remove(node["state"])
+        frontierset.remove(node["path"])#["state"])
         if goal_test(problem, node):
-            print node["path"]
-            return path_cost(problem, node)
-        if node["state"] not in explored:
-            explored.add(node["state"])
+            output(problem, node)
+            return True
+        if node["path"] not in explored:#["state"] not in explored:
+            explored.add(node["path"])#["state"])
             successors = get_successor_states(problem, node)
             if successors != None:
                 while not successors.empty():
                     child = successors.get()
-                    if child["state"] not in explored and child["state"] not in frontierset:
-                        heapq.heappush(frontier, (path_cost(problem, start)+heuristic(problem, child), child))
-                        frontierset.add(child["state"])
-                    elif child["state"] in frontierset:
+                    if child["path"] not in explored and child["path"] not in frontierset:#["state"] not in explored and child["state"] not in frontierset:
+                        heapq.heappush(frontier, (path_cost(problem, child)+heuristic(problem, child), child))
+                        frontierset.add(child["path"])#["state"])
+                    elif child["path"] in frontierset:#["state"] in frontierset:
                         for i in range(len(frontier)):
-                            if frontier[i][1]["state"] == child["state"] and (path_cost(problem, start)+heuristic(problem, child)) < frontier[i][0]:
+                            if frontier[i][1]["path"] == child["path"] and (path_cost(problem, child)+heuristic(problem, child)) < frontier[i][0]:#["state"] == child["state"] and heuristic(problem, child) < frontier[i][0]:
                                 frontier.remove(frontier[i])
                                 heapq.heapify(frontier)
-                                heapq.heappush(frontier, (path_cost(problem, start)+heuristic(problem, child), child))
+                                heapq.heappush(frontier, (path_cost(problem, child)+heuristic(problem, child), child))
+    print "No solution"
+    return False
 
-
-def main():
-    print sys.argv[0]
-    print sys.argv[1]
+time = 0
+maxfrontier = 0
+maxexplored = 0
 
 if __name__ == '__main__':
     if len(sys.argv) != 3:
@@ -365,12 +478,12 @@ if __name__ == '__main__':
     problem = readfile(filename)
     start = init(problem)
     if sys.argv[2] == 'bfs':
-        print bfs(problem, start)
+        bfs(problem, start)
     elif sys.argv[2] == 'unicost':
-        print unicost(problem, start)
+        unicost(problem, start)
     elif sys.argv[2] == 'greedy':
-        print greedy(problem, start)
+        greedy(problem, start)
     elif sys.argv[2] == 'iddfs':
-        print iddfs(problem, start)
+        iddfs(problem, start)
     elif sys.argv[2] == 'Astar':
-        print Astar(problem, start)
+        Astar(problem, start)
