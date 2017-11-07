@@ -6,14 +6,11 @@ import copy
 
 #print sys.argv[0]
 #print sys.argv[1]
-class hashabledict(dict):
-    def __hash__(self):
-        return hash(tuple(sorted(self.items())))
 
 def readfile(filename):
     f = open(filename, 'rb')
-    problem = hashabledict()
-    problem["type"] = f.readline().rstrip("\n")
+    problem = {}
+    problem["type"] = f.readline().rstrip("\n").lower()
     if problem["type"] == "monitor":
         problem["targets"] = {}
         problem["sensors"] = {}
@@ -202,9 +199,9 @@ def get_successor_states(problem, node):
                         new_node["delay"] = problem["connections"][i][2]
                     else:
                         new_node["delay"] = new_node["delay"]+problem["connections"][i][2]
-                    distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
+                    #distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
                     #if new_node["distance"] == float('inf'):
-                    new_node["distance"] = distance
+                    new_node["distance"] = problem["connections"][i][2]#distance
                     #else:
                     #    new_node["distance"] = new_node["distance"]+distance
                     new_node["path"] = new_node["path"] + "\n" + problem["connections"][i][1]
@@ -217,9 +214,9 @@ def get_successor_states(problem, node):
                         new_node["delay"] = problem["connections"][i][2]
                     else:
                         new_node["delay"] = new_node["delay"]+problem["connections"][i][2]
-                    distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
+                    #distance = math.sqrt((problem["nodes"][new_node["state"]][0]-problem["nodes"][node["state"]][0])**2+(problem["nodes"][new_node["state"]][1]-problem["nodes"][node["state"]][1])**2)
                     #if new_node["distance"] == float('inf'):
-                    new_node["distance"] = distance
+                    new_node["distance"] = problem["connections"][i][2]#distance
                     #else:
                     #    new_node["distance"] = new_node["distance"]+distance
                     new_node["path"] = new_node["path"] + "\n" + problem["connections"][i][0]
@@ -289,7 +286,6 @@ def bfs(problem, start):
     explored = set()
     global maxfrontier
     global maxexplored
-    global time
     while not frontier.empty():
         if frontier.qsize() > maxfrontier:
             maxfrontier = frontier.qsize()
@@ -323,7 +319,6 @@ def unicost(problem, start):
     explored = set()
     global maxfrontier
     global maxexplored
-    global time
     while frontier:
         if len(frontier) > maxfrontier:
             maxfrontier = len(frontier)
@@ -363,7 +358,6 @@ def greedy(problem, start):
     explored = set()
     global maxfrontier
     global maxexplored
-    global time
     while frontier:
         if len(frontier) > maxfrontier:
             maxfrontier = len(frontier)
@@ -393,25 +387,36 @@ def greedy(problem, start):
     print "No solution"
     return False
 
+explored = set()
+frontierset = set()
 def recursivedls(problem, start, depth):
     global maxfrontier
     global maxexplored
-    global time
-    explored = set()
+    global explored
+    global frontierset
+    frontier = Queue.Queue()
     if goal_test(problem, start):
         output(problem, start)
         return True
     elif depth == 0:
         return 0
     else:
+        if len(frontierset) > maxfrontier:
+            maxfrontier = len(frontierset)
+        if len(explored) > maxexplored:
+            maxexplored = len(explored)
         cutoff = False
         successors = get_successor_states(problem, start)
         if successors != None:
             while not successors.empty():
                 child = successors.get()
-                if child["path"] not in explored:
-                    explored.add(child["path"])
-            #for child in get_successor_states(start):
+                if child["path"] not in explored and child["path"] not in frontierset:
+                    frontierset.add(child["path"])
+                    frontier.put(child)
+            while not frontier.empty():
+                child = frontier.get()
+                frontierset.remove(child["path"])
+                explored.add(child["path"])
                 result = recursivedls(problem, child, depth-1)
                 if result == 0:
                     cutoff = True
@@ -423,7 +428,11 @@ def recursivedls(problem, start, depth):
             return False
 
 def iddfs(problem, start):
-    for depth in range(0,100):
+    global explored
+    global frontierset
+    for depth in range(0, 99999):
+        explored = set()
+        frontierset = set()
         result = recursivedls(problem, start, depth)
         if result != 0:
             return result
@@ -438,7 +447,6 @@ def Astar(problem, start):
     explored = set()
     global maxfrontier
     global maxexplored
-    global time
     while frontier:
         if len(frontier) > maxfrontier:
             maxfrontier = len(frontier)
