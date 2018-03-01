@@ -1,0 +1,7 @@
+Mengs-Macbook:hw2 MTJ$ python FOL_FC.py Testcase_8.txt
+True
+Roman(Marcus)
+People(Marcus)
+People(Caesar)
+Traitor(Marcus)
+Hate(Marcus,Caesar)

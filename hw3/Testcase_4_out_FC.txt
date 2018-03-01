@@ -1,0 +1,4 @@
+Mengs-Macbook:hw2 MTJ$ python FOL_FC.py Testcase_4.txt
+True
+Sibling(Eric,Rachel)
+Sibling(Lisa,Jay)

@@ -1,0 +1,12 @@
+Mengs-Macbook:hw2 MTJ$ python FOL_FC.py Testcase_5.txt
+False
+Sibling(Eric,Rachel)
+Sibling(Lisa,Jay)
+Cousin(Eric,Frances)
+Cousin(Rachel,Frances)
+Distinct(Rachel,Eric)
+Distinct(Jay,Lisa)
+Sibling(Rachel,Eric)
+Sibling(Jay,Lisa)
+Cousin(Frances,Eric)
+Cousin(Frances,Rachel)
